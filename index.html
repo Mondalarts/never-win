@@ -11,12 +11,12 @@
     body { margin:0; overflow:hidden; background:#87ceeb; }
     canvas { display:block; margin:auto; background:#87ceeb; image-rendering:pixelated; }
     #menu { position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#222;color:white;}
-    .menu-btn { font-size:24px;padding:12px 24px;margin:10px;border:none;border-radius:8px;background:#ff5722;color:white;font-weight:bold;}
+    .menu-btn { font-size:24px;padding:12px 24px;margin:10px;border:none;border-radius:8px;background:#ff5722;color:white;font-weight:bold;cursor:pointer;}
     #retryBtn { display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;padding:10px 20px;background:red;color:white;border:none;border-radius:10px;cursor:pointer;}
-    #controls { display:none;position:fixed;bottom:20px;width:100%;pointer-events:none;}
-    .left-controls { position:absolute;left:20px;bottom:20px;pointer-events:auto;}
-    .right-controls { position:absolute;right:20px;bottom:20px;pointer-events:auto;}
-    .btn { width:70px;height:70px;font-size:30px;font-weight:bold;background:#333;color:white;border:none;border-radius:50%;margin:5px;}
+    #controls { display:none;position:fixed;bottom:20px;width:100%;pointer-events:none; }
+    .left-controls { position:absolute;left:20px;bottom:20px;pointer-events:auto; display:flex; gap:10px; }
+    .right-controls { position:absolute;right:20px;bottom:20px;pointer-events:auto; }
+    .btn { width:70px;height:70px;font-size:30px;font-weight:bold;background:#333;color:white;border:none;border-radius:50%; }
   </style>
 </head>
 <body>
