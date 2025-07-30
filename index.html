@@ -62,6 +62,7 @@
 
     let player, gravity, keys, platforms, spikes, flag, gameOver, message;
     let currentLevel = 0, levels = [];
+    let hasTeleported = false; // flag for fake flag teleport cooldown
 
     function generateLevels(){
       levels = [];
@@ -87,6 +88,7 @@
     }
 
     function initGame(){
+      hasTeleported = false; // reset teleport flag on new level
       const lvl = levels[currentLevel];
       platforms = [...lvl.platforms, {x:0,y:450,w:2000,h:50,visible:true,fake:false}];
       spikes = JSON.parse(JSON.stringify(lvl.spikes));
@@ -146,6 +148,8 @@
     }
 
     function teleportFakeFlag(){
+      if(hasTeleported) return; // prevent multiple teleports per level
+
       let valid = platforms.filter(p => p.visible && !p.fake);
       let newPlat = valid[Math.floor(Math.random() * valid.length)];
       if(newPlat){
@@ -153,6 +157,7 @@
         flag.y = newPlat.y - 50;
         flag.isFake = true;
         message = "😜 Fake Flag!";
+        hasTeleported = true;
       }
     }
 
