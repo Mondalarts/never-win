@@ -1,97 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js")
-      .then(() => console.log("Service Worker Registered"));
-  }
-</script>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Troll Platformer - Manual Levels</title>
-<style>
-  body {
-    margin: 0;
-    background: #87ceeb;
-    overflow: hidden;
-    font-family: sans-serif;
-  }
-  canvas {
-    display: block;
-    margin: auto;
-    background: #87ceeb;
-    image-rendering: pixelated;
-  }
-  #menu {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #222;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-  .menu-btn {
-    font-size: 24px;
-    padding: 12px 24px;
-    margin: 10px;
-    border: none;
-    border-radius: 8px;
-    background: #ff5722;
-    color: white;
-    font-weight: bold;
-  }
-  #retryBtn {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    padding: 10px 20px;
-    background: red;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-  #controls {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    pointer-events: none;
-  }
-  .left-controls {
-    position: absolute;
-    left: 20px;
-    bottom: 20px;
-    pointer-events: auto;
-  }
-  .right-controls {
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
-    pointer-events: auto;
-  }
-  .btn {
-    width: 70px;
-    height: 70px;
-    font-size: 30px;
-    font-weight: bold;
-    background: #333;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    margin: 5px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Troll Platformer</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#87ceeb; }
+    canvas { display:block; margin:auto; background:#87ceeb; image-rendering:pixelated; }
+    #menu { position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#222;color:white;}
+    .menu-btn { font-size:24px;padding:12px 24px;margin:10px;border:none;border-radius:8px;background:#ff5722;color:white;font-weight:bold;}
+    #retryBtn { display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;padding:10px 20px;background:red;color:white;border:none;border-radius:10px;cursor:pointer;}
+    #controls { display:none;position:fixed;bottom:20px;width:100%;pointer-events:none;}
+    .left-controls { position:absolute;left:20px;bottom:20px;pointer-events:auto;}
+    .right-controls { position:absolute;right:20px;bottom:20px;pointer-events:auto;}
+    .btn { width:70px;height:70px;font-size:30px;font-weight:bold;background:#333;color:white;border:none;border-radius:50%;margin:5px;}
+  </style>
 </head>
 <body>
   <div id="menu">
-    <h1>🎮 Troll Platformer (Manual Levels)</h1>
+    <h1>🎮 Troll Platformer</h1>
     <button class="menu-btn" id="playBtn">▶ Play</button>
   </div>
 
@@ -119,970 +46,187 @@ const controls = document.getElementById("controls");
 
 const playerImg = new Image();
 playerImg.src = "https://i.ibb.co/1Gk0yV0F/vecteezy-pixel-art-characters-illustration-49049830-removebg-preview-1.png";
-
 const flagImg = new Image();
 flagImg.src = "https://i.ibb.co/VWV1TP3s/pixel-flag-icon-vector-art-260nw-2145467049-removebg-preview.png";
 
 let player, gravity, keys, platforms, spikes, flag, gameOver, message;
-let currentLevel = 0;
-let bullets = [];
-let boss = null;
-let ammo = 0;
-let gameMode = "normal";
+let currentLevel = 0, levels = [];
 
-// ✅ New variables
-let savedLevel = 0;  // checkpoint after level 25
-let cameraX = 0;     // camera scrolling
-
-const levels = [
-  // 🔹 your level data will go here
-];
-
-// ✅ Modify retry button
-retryBtn.addEventListener("click", () => {
-  retryBtn.style.display = "none";
-  currentLevel = savedLevel; // Restart from saved level
-  initGame();
-});
-
-// 🔹 Inside update(), after player movement add:
-function update() {
-  if (gameOver) return;
-
-  // Player physics
-  player.vy += gravity;
-  player.y += player.vy;
-
-  if (keys["ArrowLeft"] || keys["a"]) player.x -= 5;
-  if (keys["ArrowRight"] || keys["d"]) player.x += 5;
-
-  // ✅ Mario-style camera
-  cameraX = player.x - canvas.width / 2 + player.w / 2;
-  if (cameraX < 0) cameraX = 0;
-
-  // (rest of your update logic...)
-}
-
-// 🔹 In draw(), subtract cameraX in all drawing
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  platforms.forEach(p => {
-    ctx.fillStyle = "#3b8022";
-    ctx.fillRect(p.x - cameraX, p.y, p.w, p.h);
-  });
-
-  spikes.forEach(s => {
-    ctx.fillStyle = "red";
-    ctx.fillRect(s.x - cameraX, s.y, s.w, s.h);
-  });
-
-  ctx.drawImage(flagImg, flag.x - cameraX, flag.y, flag.w, flag.h);
-  ctx.drawImage(playerImg, player.x - cameraX, player.y, player.w, player.h);
-}
-
-// 🔹 Modify flag collision to save checkpoint
-function checkFlag() {
-  if (
-    player.x + player.w > flag.x &&
-    player.x < flag.x + flag.w &&
-    player.y + player.h > flag.y &&
-    player.y < flag.y + flag.h
-  ) {
-    message = "🎉 Level Complete!";
-    gameOver = true;
-    setTimeout(() => {
-      if (currentLevel < levels.length - 1) {
-        currentLevel++;
-
-        // ✅ Save checkpoint at 25
-        if (currentLevel >= 25) savedLevel = 25;
-
-        initGame();
-      } else {
-        message = "🏆 Game Completed!";
-        retryBtn.style.display = "block";
-      }
-    }, 800);
+function generateLevels(){
+  levels = [];
+  for(let i=0; i<30; i++){
+    let plats = [{x:50,y:350,w:150,h:20,visible:true,fake:false}];
+    let lastX=200, lastY=350;
+    for(let j=0;j<4;j++){
+      lastX += Math.random()*80 + 100;
+      lastY += Math.random()*40 - 20;
+      lastY = Math.min(Math.max(lastY,200),400);
+      let isFake = Math.random()<0.3;
+      plats.push({x:lastX,y:lastY,w:120,h:20,visible:true,fake:isFake});
+    }
+    let spikesArr = [];
+    for(let j=0;j<2 + Math.floor(i/5); j++){
+      spikesArr.push({x:Math.random()*600+300,y:430,w:30,h:30,dir:Math.random()>0.5?1:-1});
+    }
+    let lastPlat = plats[plats.length-1];
+    let flagOnFake = lastPlat.fake;
+    let flagPos = {x:lastPlat.x+40,y:lastPlat.y-50,isFake:flagOnFake};
+    levels.push({platforms:plats,spikes:spikesArr,flagPos:flagPos});
   }
 }
-</script>
-</body>
-</html>
 
-const levels = [
-  // Level 1
-  {
-    platforms: [
-      {x:50, y:350, w:150, h:20, fake:false},
-      {x:220, y:320, w:150, h:20, fake:false},
-      {x:400, y:300, w:150, h:20, fake:false},
-      {x:600, y:320, w:150, h:20, fake:false},
-      {x:820, y:350, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:300, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:850, y:300, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 2
-  {
-    platforms: [
-      {x:50, y:370, w:120, h:20, fake:false},
-      {x:180, y:340, w:120, h:20, fake:true}, // fake block
-      {x:310, y:310, w:120, h:20, fake:false},
-      {x:450, y:280, w:120, h:20, fake:false},
-      {x:600, y:320, w:120, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:-1},
-      {x:550, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:610, y:270, isFake:true}, // fake flag
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 3
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:210, y:320, w:130, h:20, fake:false},
-      {x:370, y:290, w:130, h:20, fake:true},  // fake block
-      {x:530, y:260, w:130, h:20, fake:false},
-      {x:690, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:500, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:210, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 4
-  {
-    platforms: [
-      {x:50, y:360, w:150, h:20, fake:false},
-      {x:230, y:340, w:150, h:20, fake:true},  // fake block
-      {x:420, y:320, w:150, h:20, fake:true},  // fake block
-      {x:610, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:-1},
-      {x:600, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:620, y:250, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 5
-  {
-    platforms: [
-      {x:50, y:350, w:160, h:20, fake:false},
-      {x:230, y:320, w:160, h:20, fake:false},
-      {x:410, y:290, w:160, h:20, fake:false},
-      {x:590, y:320, w:160, h:20, fake:false},
-      {x:770, y:350, w:160, h:20, fake:false}
-    ],
-    spikes: [
-      {x:500, y:430, w:30, h:30, dir:-1},
-      {x:700, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:790, y:300, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 6
-  {
-    platforms: [
-      {x:50, y:360, w:140, h:20, fake:false},
-      {x:210, y:330, w:140, h:20, fake:true},
-      {x:370, y:300, w:140, h:20, fake:false},
-      {x:530, y:270, w:140, h:20, fake:false},
-      {x:690, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:350, y:430, w:30, h:30, dir:1},
-      {x:550, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:700, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 7
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:200, y:320, w:130, h:20, fake:false},
-      {x:350, y:290, w:130, h:20, fake:true},
-      {x:500, y:260, w:130, h:20, fake:false},
-      {x:650, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:450, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:660, y:210, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 8
-  {
-    platforms: [
-      {x:50, y:370, w:150, h:20, fake:false},
-      {x:230, y:340, w:150, h:20, fake:true},
-      {x:410, y:310, w:150, h:20, fake:true},
-      {x:590, y:280, w:150, h:20, fake:false},
-      {x:770, y:320, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:480, y:430, w:30, h:30, dir:-1},
-      {x:620, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:780, y:270, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 9
-  {
-    platforms: [
-      {x:50, y:350, w:140, h:20, fake:false},
-      {x:210, y:320, w:140, h:20, fake:false},
-      {x:370, y:290, w:140, h:20, fake:true},
-      {x:530, y:260, w:140, h:20, fake:true},
-      {x:690, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:480, y:430, w:30, h:30, dir:1},
-      {x:620, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:700, y:210, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 10
-  {
-    platforms: [
-      {x:50, y:360, w:150, h:20, fake:false},
-      {x:230, y:340, w:150, h:20, fake:false},
-      {x:410, y:320, w:150, h:20, fake:true},
-      {x:590, y:300, w:150, h:20, fake:true},
-      {x:770, y:320, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:1},
-      {x:600, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:780, y:270, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  }
-];
-
-// Initialization and core logic will come in the next parts.
-// For now, this is your first chunk with 10 manual levels coded.
-
-</script>
-</body>
-</html>
-<script>
-// Continue from previous...
-
-// Levels 11 to 30 manual definitions:
-levels.push(
-  // Level 11
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:190, y:320, w:130, h:20, fake:true},
-      {x:330, y:290, w:130, h:20, fake:false},
-      {x:470, y:260, w:130, h:20, fake:false},
-      {x:610, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:350, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:620, y:210, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 12
-  {
-    platforms: [
-      {x:50, y:370, w:140, h:20, fake:false},
-      {x:210, y:340, w:140, h:20, fake:true},
-      {x:370, y:310, w:140, h:20, fake:true},
-      {x:530, y:280, w:140, h:20, fake:false},
-      {x:690, y:320, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:-1},
-      {x:600, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:270, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 13
-  {
-    platforms: [
-      {x:50, y:360, w:150, h:20, fake:false},
-      {x:220, y:330, w:150, h:20, fake:false},
-      {x:390, y:300, w:150, h:20, fake:true},
-      {x:560, y:270, w:150, h:20, fake:false},
-      {x:730, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:480, y:430, w:30, h:30, dir:1},
-      {x:640, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:740, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 14
-  {
-    platforms: [
-      {x:50, y:350, w:140, h:20, fake:false},
-      {x:200, y:320, w:140, h:20, fake:true},
-      {x:350, y:290, w:140, h:20, fake:true},
-      {x:500, y:260, w:140, h:20, fake:false},
-      {x:650, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:430, y:430, w:30, h:30, dir:-1},
-      {x:580, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:660, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 15
-  {
-    platforms: [
-      {x:50, y:360, w:150, h:20, fake:false},
-      {x:220, y:330, w:150, h:20, fake:false},
-      {x:390, y:300, w:150, h:20, fake:false},
-      {x:560, y:270, w:150, h:20, fake:true},
-      {x:730, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:520, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:740, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 16
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:190, y:320, w:130, h:20, fake:true},
-      {x:330, y:290, w:130, h:20, fake:true},
-      {x:470, y:260, w:130, h:20, fake:false},
-      {x:610, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:370, y:430, w:30, h:30, dir:-1},
-      {x:570, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:620, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 17
-  {
-    platforms: [
-      {x:50, y:360, w:140, h:20, fake:false},
-      {x:210, y:330, w:140, h:20, fake:false},
-      {x:370, y:300, w:140, h:20, fake:true},
-      {x:530, y:270, w:140, h:20, fake:true},
-      {x:690, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:420, y:430, w:30, h:30, dir:1},
-      {x:630, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:700, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 18
-  {
-    platforms: [
-      {x:50, y:350, w:150, h:20, fake:false},
-      {x:230, y:320, w:150, h:20, fake:true},
-      {x:410, y:290, w:150, h:20, fake:false},
-      {x:590, y:260, w:150, h:20, fake:false},
-      {x:770, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:470, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:780, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 19
-  {
-    platforms: [
-      {x:50, y:370, w:140, h:20, fake:false},
-      {x:210, y:340, w:140, h:20, fake:false},
-      {x:370, y:310, w:140, h:20, fake:true},
-      {x:530, y:280, w:140, h:20, fake:true},
-      {x:690, y:320, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:490, y:430, w:30, h:30, dir:-1},
-      {x:630, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:270, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 20
-  {
-    platforms: [
-      {x:50, y:350, w:150, h:20, fake:false},
-      {x:230, y:320, w:150, h:20, fake:true},
-      {x:410, y:290, w:150, h:20, fake:true},
-      {x:590, y:260, w:150, h:20, fake:false},
-      {x:770, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:460, y:430, w:30, h:30, dir:1},
-      {x:600, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:780, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 21
-  {
-    platforms: [
-      {x:50, y:360, w:140, h:20, fake:false},
-      {x:210, y:330, w:140, h:20, fake:false},
-      {x:370, y:300, w:140, h:20, fake:true},
-      {x:530, y:270, w:140, h:20, fake:false},
-      {x:690, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 22
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:190, y:320, w:130, h:20, fake:true},
-      {x:330, y:290, w:130, h:20, fake:true},
-      {x:470, y:260, w:130, h:20, fake:false},
-      {x:610, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:370, y:430, w:30, h:30, dir:-1},
-      {x:570, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:620, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 23
-  {
-    platforms: [
-      {x:50, y:360, w:140, h:20, fake:false},
-      {x:210, y:330, w:140, h:20, fake:true},
-      {x:370, y:300, w:140, h:20, fake:false},
-      {x:530, y:270, w:140, h:20, fake:false},
-      {x:690, y:300, w:140, h:20, fake:true}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 24
-  {
-    platforms: [
-      {x:50, y:350, w:150, h:20, fake:false},
-      {x:230, y:320, w:150, h:20, fake:true},
-      {x:410, y:290, w:150, h:20, fake:false},
-      {x:590, y:260, w:150, h:20, fake:false},
-      {x:770, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:450, y:430, w:30, h:30, dir:-1},
-      {x:610, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:780, y:210, isFake:true},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 25
-  {
-    platforms: [
-      {x:50, y:360, w:140, h:20, fake:false},
-      {x:210, y:330, w:140, h:20, fake:false},
-      {x:370, y:300, w:140, h:20, fake:true},
-      {x:530, y:270, w:140, h:20, fake:true},
-      {x:690, y:300, w:140, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:1},
-      {x:600, y:430, w:30, h:30, dir:-1}
-    ],
-    flagPos: {x:700, y:220, isFake:false},
-    movingFlag: false,
-    bossFight: false
-  },
-  // Level 26 to 30 will include moving flags and more complexity
-  // Level 26
-  {
-    platforms: [
-      {x:50, y:350, w:150, h:20, fake:false},
-      {x:220, y:320, w:150, h:20, fake:true},
-      {x:400, y:300, w:150, h:20, fake:false},
-      {x:600, y:320, w:150, h:20, fake:false},
-      {x:820, y:350, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:300, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:850, y:300, isFake:false},
-    movingFlag: true,
-    bossFight: false
-  },
-  // Level 27
-  {
-    platforms: [
-      {x:50, y:370, w:120, h:20, fake:false},
-      {x:180, y:340, w:120, h:20, fake:true},
-      {x:310, y:310, w:120, h:20, fake:false},
-      {x:450, y:280, w:120, h:20, fake:false},
-      {x:600, y:320, w:120, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:-1},
-      {x:550, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:610, y:270, isFake:true},
-    movingFlag: true,
-    bossFight: false
-  },
-  // Level 28
-  {
-    platforms: [
-      {x:50, y:350, w:130, h:20, fake:false},
-      {x:210, y:320, w:130, h:20, fake:false},
-      {x:370, y:290, w:130, h:20, fake:true},
-      {x:530, y:260, w:130, h:20, fake:false},
-      {x:690, y:300, w:130, h:20, fake:false}
-    ],
-    spikes: [
-      {x:500, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:700, y:210, isFake:false},
-    movingFlag: true,
-    bossFight: false
-  },
-  // Level 29
-  {
-    platforms: [
-      {x:50, y:360, w:150, h:20, fake:false},
-      {x:230, y:340, w:150, h:20, fake:true},
-      {x:420, y:320, w:150, h:20, fake:true},
-      {x:610, y:300, w:150, h:20, fake:false}
-    ],
-    spikes: [
-      {x:400, y:430, w:30, h:30, dir:-1},
-      {x:600, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:620, y:250, isFake:true},
-    movingFlag: true,
-    bossFight: false
-  },
-  // Level 30
-  {
-    platforms: [
-      {x:50, y:350, w:160, h:20, fake:false},
-      {x:230, y:320, w:160, h:20, fake:false},
-      {x:410, y:290, w:160, h:20, fake:false},
-      {x:590, y:320, w:160, h:20, fake:false},
-      {x:770, y:350, w:160, h:20, fake:false}
-    ],
-    spikes: [
-      {x:500, y:430, w:30, h:30, dir:-1},
-      {x:700, y:430, w:30, h:30, dir:1}
-    ],
-    flagPos: {x:790, y:300, isFake:false},
-    movingFlag: true,
-    bossFight: false
-  }
-);
-
-// Init function
-function initGame() {
+function initGame(){
   const lvl = levels[currentLevel];
-  platforms = [...lvl.platforms];
+  platforms = [...lvl.platforms, {x:0,y:450,w:2000,h:50,visible:true,fake:false}];
   spikes = JSON.parse(JSON.stringify(lvl.spikes));
-  flag = { x: lvl.flagPos.x, y: lvl.flagPos.y, w: 40, h: 50, isFake: lvl.flagPos.isFake, moving: lvl.movingFlag, dir:1 };
-  
-  player = { x: platforms[0].x + 20, y: platforms[0].y - 40, w: 40, h: 40, vy: 0, onGround: false, facing: 1 };
-  gravity = 0.8;
-  keys = {};
-  gameOver = false;
-  message = "";
-  ammo = 25; // bullets for boss fight only on boss levels
-  bullets = [];
-  boss = null;
-  gameMode = lvl.bossFight ? "boss" : "normal";
-
-  controls.style.display = "block";
+  player = {x:60,y:200,w:40,h:40,vy:0,onGround:false};
+  flag = {x:lvl.flagPos.x,y:lvl.flagPos.y,w:40,h:50,isFake:lvl.flagPos.isFake};
+  gravity = 1; keys = {}; gameOver = false; message = "";
   retryBtn.style.display = "none";
-
-  draw();
 }
 
-function drawPlatform(p) {
-  ctx.fillStyle = p.fake ? "#999" : "#0a0";
-  ctx.fillRect(p.x, p.y, p.w, p.h);
-  if(p.fake) {
-    ctx.strokeStyle = "#444";
-    ctx.strokeRect(p.x, p.y, p.w, p.h);
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  platforms.forEach(p=>{
+    if(p.visible){
+      ctx.fillStyle = p.fake ? "#559955" : "#3b8022";
+      ctx.fillRect(p.x,p.y,p.w,p.h);
+    }
+  });
+  ctx.fillStyle="#c91e1e";
+  spikes.forEach(s=>ctx.fillRect(s.x,s.y,s.w,s.h));
+  ctx.drawImage(flagImg,flag.x,flag.y,40,50);
+  ctx.drawImage(playerImg,player.x,player.y,player.w,player.h);
+  if(message){
+    ctx.fillStyle="black";ctx.font="30px Arial";
+    ctx.fillText(message,canvas.width/2-150,100);
+  }
+  ctx.fillStyle="black";ctx.font="20px Arial";
+  ctx.fillText("Level "+(currentLevel+1)+"/30",20,30);
+}
+
+function update(){
+  if(gameOver) return;
+  player.vy += gravity; player.y += player.vy;
+  if(keys["ArrowLeft"]) player.x -= 4;
+  if(keys["ArrowRight"]) player.x += 4;
+  player.onGround = false;
+  platforms.forEach(p=>{
+    if(p.visible && player.x + player.w > p.x && player.x < p.x + p.w &&
+       player.y + player.h > p.y && player.y + player.h < p.y + 20 && player.vy >= 0){
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+      if(p.fake){
+        setTimeout(() => { p.visible = false; }, 300);
+      }
+    }
+  });
+  if(player.y > canvas.height) die();
+  spikes.forEach(s => {
+    s.x += s.dir * 2;
+    if(s.x < 50 || s.x > 900) s.dir *= -1;
+    if(col(player, s)) die();
+  });
+  if(col(player, flag)){
+    if(flag.isFake) teleportFakeFlag();
+    else nextLevel();
   }
 }
 
-function drawSpike(s) {
-  ctx.fillStyle = "#a00";
-  ctx.beginPath();
-  ctx.moveTo(s.x, s.y + s.h);
-  ctx.lineTo(s.x + s.w / 2, s.y);
-  ctx.lineTo(s.x + s.w, s.y + s.h);
-  ctx.closePath();
-  ctx.fill();
+function teleportFakeFlag(){
+  let valid = platforms.filter(p => p.visible && !p.fake);
+  let newPlat = valid[Math.floor(Math.random() * valid.length)];
+  if(newPlat){
+    flag.x = newPlat.x + 30;
+    flag.y = newPlat.y - 50;
+    flag.isFake = true;
+    message = "😜 Fake Flag!";
+  }
 }
 
-function drawFlag() {
-  ctx.fillStyle = flag.isFake ? "#f00" : "#ff0";
-  ctx.fillRect(flag.x, flag.y, flag.w, flag.h);
-  // could draw flagImg but for speed we use colored box
+function col(a,b){
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-// Controls event listeners
-window.addEventListener("keydown", e => {
-  if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") keys.left = true;
-  if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") keys.right = true;
-  if(e.key === " " || e.key.toLowerCase() === "w" || e.key.toLowerCase() === "arrowup") keys.jump = true;
-});
-window.addEventListener("keyup", e => {
-  if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a") keys.left = false;
-  if(e.key === "ArrowRight" || e.key.toLowerCase() === "d") keys.right = false;
-  if(e.key === " " || e.key.toLowerCase() === "w" || e.key.toLowerCase() === "arrowup") keys.jump = false;
-});
+function die(){
+  gameOver = true;
+  retryBtn.style.display = "block";
+  message = "☠ Game Over!";
+}
 
-// Mobile buttons:
-document.getElementById("left").addEventListener("touchstart", e => { keys.left = true; e.preventDefault(); });
-document.getElementById("left").addEventListener("touchend", e => { keys.left = false; e.preventDefault(); });
-document.getElementById("right").addEventListener("touchstart", e => { keys.right = true; e.preventDefault(); });
-document.getElementById("right").addEventListener("touchend", e => { keys.right = false; e.preventDefault(); });
-document.getElementById("jump").addEventListener("touchstart", e => { keys.jump = true; e.preventDefault(); });
-document.getElementById("jump").addEventListener("touchend", e => { keys.jump = false; e.preventDefault(); });
+function nextLevel(){
+  if(currentLevel < levels.length - 1){
+    currentLevel++;
+    localStorage.setItem('trollPlatformerLevel', currentLevel);
+    initGame();
+  } else {
+    message = "🏆 Game Completed!";
+    gameOver = true;
+    retryBtn.style.display = "block";
+    localStorage.removeItem('trollPlatformerLevel');
+  }
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 
 retryBtn.addEventListener("click", () => {
+  retryBtn.style.display = "none";
+  // Start from saved level or 0
+  let saved = localStorage.getItem('trollPlatformerLevel');
+  if(saved !== null){
+    currentLevel = parseInt(saved);
+  } else {
+    currentLevel = 0;
+  }
   initGame();
+});
+
+document.addEventListener("keydown", e => {
+  if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = true;
+  if(e.key === " " && player.onGround) player.vy = -15;
+});
+document.addEventListener("keyup", e => {
+  if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = false;
+});
+
+function press(btn, state){
+  keys[btn] = state;
+}
+["left","right"].forEach(id => {
+  document.getElementById(id).addEventListener("touchstart", e => {
+    e.preventDefault();
+    press(id === "left" ? "ArrowLeft" : "ArrowRight", true);
+  });
+  document.getElementById(id).addEventListener("touchend", e => {
+    e.preventDefault();
+    press(id === "left" ? "ArrowLeft" : "ArrowRight", false);
+  });
+});
+document.getElementById("jump").addEventListener("touchstart", e => {
+  e.preventDefault();
+  if(player.onGround) player.vy = -15;
 });
 
 playBtn.addEventListener("click", () => {
   menu.style.display = "none";
+  controls.style.display = "block";
+  generateLevels();
+  // Load saved level if exists
+  let saved = localStorage.getItem('trollPlatformerLevel');
+  if(saved !== null){
+    currentLevel = parseInt(saved);
+  } else {
+    currentLevel = 0;
+  }
   initGame();
+  loop();
 });
-
-// Basic collision detection
-function rectIntersect(r1, r2) {
-  return !(r2.x > r1.x + r1.w || 
-           r2.x + r2.w < r1.x || 
-           r2.y > r1.y + r1.h ||
-           r2.y + r2.h < r1.y);
-}
-
-function update() {
-  if(gameOver) return;
-
-  // Apply gravity
-  player.vy += gravity;
-  player.y += player.vy;
-
-  // Horizontal movement
-  if(keys.left) {
-    player.x -= 5;
-    player.facing = -1;
-  }
-  if(keys.right) {
-    player.x += 5;
-    player.facing = 1;
-  }
-
-  // Jumping
-  if(keys.jump && player.onGround) {
-    player.vy = -14;
-    player.onGround = false;
-  }
-
-  player.onGround = false;
-
-  // Platform collision
-  for(let p of platforms) {
-    if(rectIntersect(player, p)) {
-      if(player.vy > 0 && player.y + player.h - player.vy <= p.y) {
-        // landed on platform
-        if(!p.fake) {
-          player.y = p.y - player.h;
-          player.vy = 0;
-          player.onGround = true;
-        } else {
-          // fake block: let player fall through
-        }
-      }
-    }
-  }
-
-  // Spike collision (dead)
-  for(let s of spikes) {
-    if(rectIntersect(player, s)) {
-      gameOver = true;
-      message = "You Died! 💀";
-      retryBtn.style.display = "block";
-    }
-  }
-
-  // Flag logic
-  if(flag.moving) {
-    flag.x += flag.dir * 2;
-    if(flag.x > canvas.width - flag.w || flag.x < 0) flag.dir *= -1;
-  }
-
-  // Player reach flag
-  if(rectIntersect(player, flag)) {
-    if(!flag.isFake) {
-      currentLevel++;
-      if(currentLevel >= levels.length) {
-        message = "🎉 You Completed All Levels! 🎉";
-        gameOver = true;
-        retryBtn.style.display = "block";
-      } else {
-        initGame();
-      }
-    } else {
-      message = "Fake Flag! Keep Searching!";
-    }
-  }
-
-  // Keep player in screen
-  if(player.x < 0) player.x = 0;
-  if(player.x + player.w > canvas.width) player.x = canvas.width - player.w;
-  if(player.y > canvas.height) {
-    gameOver = true;
-    message = "You Fell! 💀";
-    retryBtn.style.display = "block";
-  }
-
-  draw();
-  requestAnimationFrame(update);
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw platforms
-  for(let p of platforms) {
-    drawPlatform(p);
-  }
-
-  // Draw spikes
-  for(let s of spikes) {
-    drawSpike(s);
-  }
-
-  // Draw flag
-  drawFlag();
-
-  // Draw player
-  ctx.fillStyle = "blue";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-
-  // Draw messages
-  if(message) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText(message, 20, 50);
-  }
-}
-
 </script>
-// LEVEL 31–35 (Moving Flag)
-levels.push({
-  platforms:[makePlatform(50,400,150,20),makePlatform(250,350,120,20),makePlatform(450,320,150,20)],
-  spikes:[makeSpike(300,430)],
-  flag:{x:700,y:250,w:40,h:50,isFake:false,moving:true,dir:1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,420,150,20),makePlatform(300,370,120,20),makePlatform(550,330,150,20)],
-  spikes:[makeSpike(400,430)],
-  flag:{x:750,y:250,w:40,h:50,isFake:false,moving:true,dir:-1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,430,150,20),makePlatform(270,380,120,20),makePlatform(520,340,150,20),makePlatform(720,300,100,20)],
-  spikes:[makeSpike(350,430),makeSpike(600,430)],
-  flag:{x:800,y:250,w:40,h:50,isFake:false,moving:true,dir:1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,420,150,20),makePlatform(230,360,120,20),makePlatform(500,320,120,20),makePlatform(700,280,100,20)],
-  spikes:[makeSpike(400,430)],
-  flag:{x:820,y:240,w:40,h:50,isFake:false,moving:true,dir:-1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,430,150,20),makePlatform(250,380,120,20),makePlatform(500,340,150,20),makePlatform(750,310,100,20)],
-  spikes:[makeSpike(380,430),makeSpike(620,430)],
-  flag:{x:850,y:250,w:40,h:50,isFake:false,moving:true,dir:1}
-});
-levels.push({
-  platforms:[makePlatform(50,430,150,20),makePlatform(300,390,120,20),makePlatform(550,350,150,20),makePlatform(800,320,100,20)],
-  spikes:[makeSpike(420,430)],
-  flag:{x:880,y:250,w:40,h:50,isFake:false,moving:true,dir:-1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,420,150,20),makePlatform(280,370,120,20),makePlatform(520,330,150,20),makePlatform(770,300,100,20)],
-  spikes:[makeSpike(350,430),makeSpike(600,430)],
-  flag:{x:850,y:250,w:40,h:50,isFake:false,moving:true,dir:1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,410,150,20),makePlatform(250,360,120,20),makePlatform(500,330,150,20),makePlatform(750,300,100,20)],
-  spikes:[makeSpike(400,430)],
-  flag:{x:830,y:250,w:40,h:50,isFake:false,moving:true,dir:-1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,430,150,20),makePlatform(300,390,120,20),makePlatform(560,350,150,20),makePlatform(820,320,100,20)],
-  spikes:[makeSpike(420,430),makeSpike(650,430)],
-  flag:{x:900,y:250,w:40,h:50,isFake:false,moving:true,dir:1}
-});
-
-levels.push({
-  platforms:[makePlatform(50,420,150,20),makePlatform(270,370,120,20),makePlatform(540,330,150,20),makePlatform(790,300,100,20)],
-  spikes:[makeSpike(360,430)],
-  flag:{x:860,y:250,w:40,h:50,isFake:false,moving:true,dir:-1}
-});
-levels.push({
-  platforms:[
-    makePlatform(50,420,150,20),
-    makePlatform(280,370,120,20,true), // fake block
-    makePlatform(540,330,150,20)
-  ],
-  spikes:[makeSpike(400,430)],
-  flag:{x:820,y:250,w:40,h:50,isFake:true,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,430,150,20),
-    makePlatform(250,380,120,20),
-    makePlatform(500,340,150,20,true) // fake block
-  ],
-  spikes:[makeSpike(350,430)],
-  flag:{x:850,y:250,w:40,h:50,isFake:false,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,420,150,20),
-    makePlatform(300,370,120,20,true), // fake
-    makePlatform(560,330,150,20,true) // fake
-  ],
-  spikes:[makeSpike(450,430)],
-  flag:{x:880,y:250,w:40,h:50,isFake:true,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,430,150,20),
-    makePlatform(280,380,120,20),
-    makePlatform(540,340,150,20,true) // fake
-  ],
-  spikes:[makeSpike(380,430),makeSpike(620,430)],
-  flag:{x:900,y:250,w:40,h:50,isFake:false,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,410,150,20),
-    makePlatform(270,360,120,20,true), // fake
-    makePlatform(520,330,150,20)
-  ],
-  spikes:[makeSpike(350,430)],
-  flag:{x:870,y:250,w:40,h:50,isFake:true,moving:false}
-});
-levels.push({
-  platforms:[
-    makePlatform(50,420,150,20),
-    makePlatform(250,380,120,20,true),
-    makePlatform(500,340,120,20,true),
-    makePlatform(750,300,120,20)
-  ],
-  spikes:[makeSpike(380,430)],
-  flag:{x:880,y:250,w:40,h:50,isFake:true,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,430,150,20),
-    makePlatform(280,390,120,20,true),
-    makePlatform(520,350,150,20),
-    makePlatform(800,310,120,20,true)
-  ],
-  spikes:[makeSpike(400,430),makeSpike(650,430)],
-  flag:{x:900,y:250,w:40,h:50,isFake:false,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,420,150,20),
-    makePlatform(270,370,120,20,true),
-    makePlatform(560,330,150,20,true),
-    makePlatform(820,300,120,20)
-  ],
-  spikes:[makeSpike(450,430)],
-  flag:{x:860,y:250,w:40,h:50,isFake:true,moving:false}
-});
-
-levels.push({
-  platforms:[
-    makePlatform(50,410,150,20),
-    makePlatform(300,360,120,20,true),
-    makePlatform(570,320,150,20,true),
-    makePlatform(840,290,120,20)
-  ],
-  spikes:[makeSpike(420,430),makeSpike(700,430)],
-  flag:{x:880,y:250,w:40,h:50,isFake:false,moving:false}
-});
-levels.push({
-  platforms:[
-    makePlatform(0,450,1000,50), // big ground
-    makePlatform(200,380,150,20),
-    makePlatform(400,320,150,20),
-    makePlatform(650,300,150,20)
-  ],
-  spikes:[],
-  flag:{x:900,y:400,w:40,h:50,isFake:false,moving:false},
-  boss:true // special boss mode
-});
+</body>
+</html>
