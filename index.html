@@ -2,7 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#ff5722" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <title>Troll Platformer</title>
   <style>
     body { margin:0; overflow:hidden; background:#87ceeb; }
@@ -36,197 +39,203 @@
 
   <button id="retryBtn">🔄 Retry</button>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const retryBtn = document.getElementById("retryBtn");
-const menu = document.getElementById("menu");
-const playBtn = document.getElementById("playBtn");
-const controls = document.getElementById("controls");
-
-const playerImg = new Image();
-playerImg.src = "https://i.ibb.co/1Gk0yV0F/vecteezy-pixel-art-characters-illustration-49049830-removebg-preview-1.png";
-const flagImg = new Image();
-flagImg.src = "https://i.ibb.co/VWV1TP3s/pixel-flag-icon-vector-art-260nw-2145467049-removebg-preview.png";
-
-let player, gravity, keys, platforms, spikes, flag, gameOver, message;
-let currentLevel = 0, levels = [];
-
-function generateLevels(){
-  levels = [];
-  for(let i=0; i<30; i++){
-    let plats = [{x:50,y:350,w:150,h:20,visible:true,fake:false}];
-    let lastX=200, lastY=350;
-    for(let j=0;j<4;j++){
-      lastX += Math.random()*80 + 100;
-      lastY += Math.random()*40 - 20;
-      lastY = Math.min(Math.max(lastY,200),400);
-      let isFake = Math.random()<0.3;
-      plats.push({x:lastX,y:lastY,w:120,h:20,visible:true,fake:isFake});
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.log('Service Worker Registration Failed:', err));
     }
-    let spikesArr = [];
-    for(let j=0;j<2 + Math.floor(i/5); j++){
-      spikesArr.push({x:Math.random()*600+300,y:430,w:30,h:30,dir:Math.random()>0.5?1:-1});
-    }
-    let lastPlat = plats[plats.length-1];
-    let flagOnFake = lastPlat.fake;
-    let flagPos = {x:lastPlat.x+40,y:lastPlat.y-50,isFake:flagOnFake};
-    levels.push({platforms:plats,spikes:spikesArr,flagPos:flagPos});
-  }
-}
+  </script>
 
-function initGame(){
-  const lvl = levels[currentLevel];
-  platforms = [...lvl.platforms, {x:0,y:450,w:2000,h:50,visible:true,fake:false}];
-  spikes = JSON.parse(JSON.stringify(lvl.spikes));
-  player = {x:60,y:200,w:40,h:40,vy:0,onGround:false};
-  flag = {x:lvl.flagPos.x,y:lvl.flagPos.y,w:40,h:50,isFake:lvl.flagPos.isFake};
-  gravity = 1; keys = {}; gameOver = false; message = "";
-  retryBtn.style.display = "none";
-}
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const retryBtn = document.getElementById("retryBtn");
+    const menu = document.getElementById("menu");
+    const playBtn = document.getElementById("playBtn");
+    const controls = document.getElementById("controls");
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  platforms.forEach(p=>{
-    if(p.visible){
-      ctx.fillStyle = p.fake ? "#559955" : "#3b8022";
-      ctx.fillRect(p.x,p.y,p.w,p.h);
-    }
-  });
-  ctx.fillStyle="#c91e1e";
-  spikes.forEach(s=>ctx.fillRect(s.x,s.y,s.w,s.h));
-  ctx.drawImage(flagImg,flag.x,flag.y,40,50);
-  ctx.drawImage(playerImg,player.x,player.y,player.w,player.h);
-  if(message){
-    ctx.fillStyle="black";ctx.font="30px Arial";
-    ctx.fillText(message,canvas.width/2-150,100);
-  }
-  ctx.fillStyle="black";ctx.font="20px Arial";
-  ctx.fillText("Level "+(currentLevel+1)+"/30",20,30);
-}
+    const playerImg = new Image();
+    playerImg.src = "https://i.ibb.co/1Gk0yV0F/vecteezy-pixel-art-characters-illustration-49049830-removebg-preview-1.png";
+    const flagImg = new Image();
+    flagImg.src = "https://i.ibb.co/VWV1TP3s/pixel-flag-icon-vector-art-260nw-2145467049-removebg-preview.png";
 
-function update(){
-  if(gameOver) return;
-  player.vy += gravity; player.y += player.vy;
-  if(keys["ArrowLeft"]) player.x -= 4;
-  if(keys["ArrowRight"]) player.x += 4;
-  player.onGround = false;
-  platforms.forEach(p=>{
-    if(p.visible && player.x + player.w > p.x && player.x < p.x + p.w &&
-       player.y + player.h > p.y && player.y + player.h < p.y + 20 && player.vy >= 0){
-      player.y = p.y - player.h;
-      player.vy = 0;
-      player.onGround = true;
-      if(p.fake){
-        setTimeout(() => { p.visible = false; }, 300);
+    let player, gravity, keys, platforms, spikes, flag, gameOver, message;
+    let currentLevel = 0, levels = [];
+
+    function generateLevels(){
+      levels = [];
+      for(let i=0; i<30; i++){
+        let plats = [{x:50,y:350,w:150,h:20,visible:true,fake:false}];
+        let lastX=200, lastY=350;
+        for(let j=0;j<4;j++){
+          lastX += Math.random()*80 + 100;
+          lastY += Math.random()*40 - 20;
+          lastY = Math.min(Math.max(lastY,200),400);
+          let isFake = Math.random()<0.3;
+          plats.push({x:lastX,y:lastY,w:120,h:20,visible:true,fake:isFake});
+        }
+        let spikesArr = [];
+        for(let j=0;j<2 + Math.floor(i/5); j++){
+          spikesArr.push({x:Math.random()*600+300,y:430,w:30,h:30,dir:Math.random()>0.5?1:-1});
+        }
+        let lastPlat = plats[plats.length-1];
+        let flagOnFake = lastPlat.fake;
+        let flagPos = {x:lastPlat.x+40,y:lastPlat.y-50,isFake:flagOnFake};
+        levels.push({platforms:plats,spikes:spikesArr,flagPos:flagPos});
       }
     }
-  });
-  if(player.y > canvas.height) die();
-  spikes.forEach(s => {
-    s.x += s.dir * 2;
-    if(s.x < 50 || s.x > 900) s.dir *= -1;
-    if(col(player, s)) die();
-  });
-  if(col(player, flag)){
-    if(flag.isFake) teleportFakeFlag();
-    else nextLevel();
-  }
-}
 
-function teleportFakeFlag(){
-  let valid = platforms.filter(p => p.visible && !p.fake);
-  let newPlat = valid[Math.floor(Math.random() * valid.length)];
-  if(newPlat){
-    flag.x = newPlat.x + 30;
-    flag.y = newPlat.y - 50;
-    flag.isFake = true;
-    message = "😜 Fake Flag!";
-  }
-}
+    function initGame(){
+      const lvl = levels[currentLevel];
+      platforms = [...lvl.platforms, {x:0,y:450,w:2000,h:50,visible:true,fake:false}];
+      spikes = JSON.parse(JSON.stringify(lvl.spikes));
+      player = {x:60,y:200,w:40,h:40,vy:0,onGround:false};
+      flag = {x:lvl.flagPos.x,y:lvl.flagPos.y,w:40,h:50,isFake:lvl.flagPos.isFake};
+      gravity = 1; keys = {}; gameOver = false; message = "";
+      retryBtn.style.display = "none";
+    }
 
-function col(a,b){
-  return a.x < b.x + b.w && a.x + a.w > b.x &&
-         a.y < b.y + b.h && a.y + a.h > b.y;
-}
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      platforms.forEach(p=>{
+        if(p.visible){
+          ctx.fillStyle = p.fake ? "#559955" : "#3b8022";
+          ctx.fillRect(p.x,p.y,p.w,p.h);
+        }
+      });
+      ctx.fillStyle="#c91e1e";
+      spikes.forEach(s=>ctx.fillRect(s.x,s.y,s.w,s.h));
+      ctx.drawImage(flagImg,flag.x,flag.y,40,50);
+      ctx.drawImage(playerImg,player.x,player.y,player.w,player.h);
+      if(message){
+        ctx.fillStyle="black";ctx.font="30px Arial";
+        ctx.fillText(message,canvas.width/2-150,100);
+      }
+      ctx.fillStyle="black";ctx.font="20px Arial";
+      ctx.fillText("Level "+(currentLevel+1)+"/30",20,30);
+    }
 
-function die(){
-  gameOver = true;
-  retryBtn.style.display = "block";
-  message = "☠ Game Over!";
-}
+    function update(){
+      if(gameOver) return;
+      player.vy += gravity; player.y += player.vy;
+      if(keys["ArrowLeft"]) player.x -= 4;
+      if(keys["ArrowRight"]) player.x += 4;
+      player.onGround = false;
+      platforms.forEach(p=>{
+        if(p.visible && player.x + player.w > p.x && player.x < p.x + p.w &&
+           player.y + player.h > p.y && player.y + player.h < p.y + 20 && player.vy >= 0){
+          player.y = p.y - player.h;
+          player.vy = 0;
+          player.onGround = true;
+          if(p.fake){
+            setTimeout(() => { p.visible = false; }, 300);
+          }
+        }
+      });
+      if(player.y > canvas.height) die();
+      spikes.forEach(s => {
+        s.x += s.dir * 2;
+        if(s.x < 50 || s.x > 900) s.dir *= -1;
+        if(col(player, s)) die();
+      });
+      if(col(player, flag)){
+        if(flag.isFake) teleportFakeFlag();
+        else nextLevel();
+      }
+    }
 
-function nextLevel(){
-  if(currentLevel < levels.length - 1){
-    currentLevel++;
-    localStorage.setItem('trollPlatformerLevel', currentLevel);
-    initGame();
-  } else {
-    message = "🏆 Game Completed!";
-    gameOver = true;
-    retryBtn.style.display = "block";
-    localStorage.removeItem('trollPlatformerLevel');
-  }
-}
+    function teleportFakeFlag(){
+      let valid = platforms.filter(p => p.visible && !p.fake);
+      let newPlat = valid[Math.floor(Math.random() * valid.length)];
+      if(newPlat){
+        flag.x = newPlat.x + 30;
+        flag.y = newPlat.y - 50;
+        flag.isFake = true;
+        message = "😜 Fake Flag!";
+      }
+    }
 
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
+    function col(a,b){
+      return a.x < b.x + b.w && a.x + a.w > b.x &&
+             a.y < b.y + b.h && a.y + a.h > b.y;
+    }
 
-retryBtn.addEventListener("click", () => {
-  retryBtn.style.display = "none";
-  // Start from saved level or 0
-  let saved = localStorage.getItem('trollPlatformerLevel');
-  if(saved !== null){
-    currentLevel = parseInt(saved);
-  } else {
-    currentLevel = 0;
-  }
-  initGame();
-});
+    function die(){
+      gameOver = true;
+      retryBtn.style.display = "block";
+      message = "☠ Game Over!";
+    }
 
-document.addEventListener("keydown", e => {
-  if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = true;
-  if(e.key === " " && player.onGround) player.vy = -15;
-});
-document.addEventListener("keyup", e => {
-  if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = false;
-});
+    function nextLevel(){
+      if(currentLevel < levels.length - 1){
+        currentLevel++;
+        localStorage.setItem('trollPlatformerLevel', currentLevel);
+        initGame();
+      } else {
+        message = "🏆 Game Completed!";
+        gameOver = true;
+        retryBtn.style.display = "block";
+        localStorage.removeItem('trollPlatformerLevel');
+      }
+    }
 
-function press(btn, state){
-  keys[btn] = state;
-}
-["left","right"].forEach(id => {
-  document.getElementById(id).addEventListener("touchstart", e => {
-    e.preventDefault();
-    press(id === "left" ? "ArrowLeft" : "ArrowRight", true);
-  });
-  document.getElementById(id).addEventListener("touchend", e => {
-    e.preventDefault();
-    press(id === "left" ? "ArrowLeft" : "ArrowRight", false);
-  });
-});
-document.getElementById("jump").addEventListener("touchstart", e => {
-  e.preventDefault();
-  if(player.onGround) player.vy = -15;
-});
+    function loop(){
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
 
-playBtn.addEventListener("click", () => {
-  menu.style.display = "none";
-  controls.style.display = "block";
-  generateLevels();
-  // Load saved level if exists
-  let saved = localStorage.getItem('trollPlatformerLevel');
-  if(saved !== null){
-    currentLevel = parseInt(saved);
-  } else {
-    currentLevel = 0;
-  }
-  initGame();
-  loop();
-});
-</script>
+    retryBtn.addEventListener("click", () => {
+      retryBtn.style.display = "none";
+      let saved = localStorage.getItem('trollPlatformerLevel');
+      if(saved !== null){
+        currentLevel = parseInt(saved);
+      } else {
+        currentLevel = 0;
+      }
+      initGame();
+    });
+
+    document.addEventListener("keydown", e => {
+      if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = true;
+      if(e.key === " " && player.onGround) player.vy = -15;
+    });
+    document.addEventListener("keyup", e => {
+      if(["ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key] = false;
+    });
+
+    function press(btn, state){
+      keys[btn] = state;
+    }
+    ["left","right"].forEach(id => {
+      document.getElementById(id).addEventListener("touchstart", e => {
+        e.preventDefault();
+        press(id === "left" ? "ArrowLeft" : "ArrowRight", true);
+      });
+      document.getElementById(id).addEventListener("touchend", e => {
+        e.preventDefault();
+        press(id === "left" ? "ArrowLeft" : "ArrowRight", false);
+      });
+    });
+    document.getElementById("jump").addEventListener("touchstart", e => {
+      e.preventDefault();
+      if(player.onGround) player.vy = -15;
+    });
+
+    playBtn.addEventListener("click", () => {
+      menu.style.display = "none";
+      controls.style.display = "block";
+      generateLevels();
+      let saved = localStorage.getItem('trollPlatformerLevel');
+      if(saved !== null){
+        currentLevel = parseInt(saved);
+      } else {
+        currentLevel = 0;
+      }
+      initGame();
+      loop();
+    });
+  </script>
 </body>
 </html>
